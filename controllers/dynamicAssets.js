@@ -1,5 +1,5 @@
 const Collaboration = require("../models/collaborationModel");
-const Review = require("../models/ReviewModel");
+const Review = require("../models/reviewModel");
 const OurSkills = require("../models/ourSkillsModel");
 const LatestThinking = require("../models/latestThinkingModel");
 const LatestProject = require("../models/latestProjectModel");
@@ -30,7 +30,6 @@ const logMulter = (req, res, next) => {
     console.log("✅ Multer files:", req.files);
     next();
   });
-
 };
 
 module.exports = {
@@ -282,263 +281,284 @@ module.exports = {
     }
   },
 
-hero: async (req, res) => {
-  const id = req.params.id;
+  hero: async (req, res) => {
+    const id = req.params.id;
 
-  if (req.method === "POST") {
-    return logMulter(req, res, async () => {
-      const {
-        title_lines,
-        subheading,
-        subhighlight,
-        description,
-        button_text,
-        button_path,
-        features,
-        intro_heading,
-        intro_highlight,
-        paragraph_text,
-      } = req.body;
-
-      let images = [];
-      if (Array.isArray(req.files)) {
-        images = req.files.map((file) => file.path);
-      } else if (req.files && typeof req.files === "object") {
-        images = Object.values(req.files).flat().map((file) => file.path);
-      }
-
-      if (!title_lines || !subheading || !description || !button_text) {
-        return res.status(400).json({
-          error:
-            "All fields (title_lines, subheading,  description, button_text) are required.",
-        });
-      }
-      try {
-        const newHero = new Hero({
+    if (req.method === "POST") {
+      return logMulter(req, res, async () => {
+        const {
           title_lines,
           subheading,
           subhighlight,
           description,
           button_text,
           button_path,
-          image: images,
+          features,
           intro_heading,
           intro_highlight,
           paragraph_text,
-          features: features ? JSON.parse(features) : [],
-        });
+        } = req.body;
 
-        await newHero.save();
-        return res
-          .status(201)
-          .json({ message: "Hero section created", data: newHero });
+        let images = [];
+        if (Array.isArray(req.files)) {
+          images = req.files.map((file) => file.path);
+        } else if (req.files && typeof req.files === "object") {
+          images = Object.values(req.files)
+            .flat()
+            .map((file) => file.path);
+        }
+
+        if (!title_lines || !subheading || !description || !button_text) {
+          return res.status(400).json({
+            error:
+              "All fields (title_lines, subheading,  description, button_text) are required.",
+          });
+        }
+        try {
+          const newHero = new Hero({
+            title_lines,
+            subheading,
+            subhighlight,
+            description,
+            button_text,
+            button_path,
+            image: images,
+            intro_heading,
+            intro_highlight,
+            paragraph_text,
+            features: features ? JSON.parse(features) : [],
+          });
+
+          await newHero.save();
+          return res
+            .status(201)
+            .json({ message: "Hero section created", data: newHero });
+        } catch (error) {
+          console.error("Error saving Hero section:", error);
+          return res.status(500).json({ error: "Internal server error" });
+        }
+      });
+    } else if (req.method === "GET") {
+      try {
+        const hero = await Hero.find().sort({ _id: -1 });
+        return res.status(200).json(hero);
       } catch (error) {
-        console.error("Error saving Hero section:", error);
+        console.error("Error fetching Hero section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    });
-  } else if (req.method === "GET") {
-    try {
-      const hero = await Hero.find().sort({ _id: -1 });
-      return res.status(200).json(hero);
-    } catch (error) {
-      console.error("Error fetching Hero section:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  } else if (req.method === "PUT") {
-    if (!id) {
-      return res.status(400).json({ error: "ID is required for update." });
-    }
-
-    return logMulter(req, res, async () => {
-  console.log("Put-handler req.files:", req.files);
-  console.log("Put-handler req.body:", req.body);
-
-  const {
-    title_lines,
-    subheading,
-    subhighlight,
-    description,
-    button_text,
-    button_path,
-    features,
-    intro_heading,
-    intro_highlight,
-    paragraph_text,
-  } = req.body;
-
-  let images = [];
-  if (Array.isArray(req.files)) {
-    images = req.files.map((file) => file.path);
-  } else if (req.files && typeof req.files === "object") {
-    images = Object.values(req.files).flat().map((file) => file.path);
-  }
-
-  let parsedFeatures = [];
-  try {
-    parsedFeatures = features ? JSON.parse(features) : [];
-  } catch (err) {
-    return res.status(400).json({ error: "Invalid JSON format in 'features'" });
-  }
-
-  const updateData = {
-    title_lines,
-    subheading,
-    subhighlight,
-    description,
-    button_text,
-    button_path,
-    features: parsedFeatures,
-    intro_heading,
-    intro_highlight,
-    paragraph_text,
-  };
-
-  if (images.length > 0) {
-    updateData.image = images;
-  }
-
-  try {
-    const updated = await Hero.findByIdAndUpdate(id, updateData, {
-      new: true,
-    });
-    if (!updated) {
-      return res.status(404).json({ error: "Hero section not found" });
-    }
-    return res
-      .status(200)
-      .json({ message: "Hero section updated", data: updated });
-  } catch (error) {
-    console.error("Error updating Hero section:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-  } else if (req.method === "DELETE") {
-    if (!id) {
-      return res.status(400).json({ error: "ID is required for deletion." });
-    }
-
-    try {
-      const deleted = await Hero.findByIdAndDelete(id);
-      if (!deleted) {
-        return res.status(404).json({ error: "Hero section not found" });
+    } else if (req.method === "PUT") {
+      if (!id) {
+        return res.status(400).json({ error: "ID is required for update." });
       }
-      return res.status(200).json({ message: "Hero section deleted" });
-    } catch (error) {
-      console.error("Error deleting Hero section:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  } else {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-},
- team : async (req,res) => {
-     const id  = req.params.id;
-     
-     if (req.method === 'POST'){
-         return logMulter(req,res, async ()=>{
-          const {name,designation,linkedin_url,twitter_url,facebook_url,instagram_url, title} = req.body;
-         const image = req.files && req.files.image && req.files.image.length > 0 ? req.files.image[0].path : null;
-          if (!name || !designation || !image){
-            return res.status(400).json({
-              error: 'Name, Designation, and Image are required.',
-            });
-          }
 
-          try {
-            const newTeamMember = new Team({
-              name,
-              designation,
-              image,
-              linkedin_url,
-              twitter_url,
-              facebook_url,
-              instagram_url,
-              
-            });
-            await newTeamMember.save();
-            return res.status(201).json({
-              message: 'Team member added',
-              data: newTeamMember,
-            })
-          } catch (error) {
-            console.error('Error saving team member:', error);
-           return res.status(500).json({ error: 'Internal server error' });
+      return logMulter(req, res, async () => {
+        console.log("Put-handler req.files:", req.files);
+        console.log("Put-handler req.body:", req.body);
+
+        const {
+          title_lines,
+          subheading,
+          subhighlight,
+          description,
+          button_text,
+          button_path,
+          features,
+          intro_heading,
+          intro_highlight,
+          paragraph_text,
+        } = req.body;
+
+        let images = [];
+        if (Array.isArray(req.files)) {
+          images = req.files.map((file) => file.path);
+        } else if (req.files && typeof req.files === "object") {
+          images = Object.values(req.files)
+            .flat()
+            .map((file) => file.path);
+        }
+
+        let parsedFeatures = [];
+        try {
+          parsedFeatures = features ? JSON.parse(features) : [];
+        } catch (err) {
+          return res
+            .status(400)
+            .json({ error: "Invalid JSON format in 'features'" });
+        }
+
+        const updateData = {
+          title_lines,
+          subheading,
+          subhighlight,
+          description,
+          button_text,
+          button_path,
+          features: parsedFeatures,
+          intro_heading,
+          intro_highlight,
+          paragraph_text,
+        };
+
+        if (images.length > 0) {
+          updateData.image = images;
+        }
+
+        try {
+          const updated = await Hero.findByIdAndUpdate(id, updateData, {
+            new: true,
+          });
+          if (!updated) {
+            return res.status(404).json({ error: "Hero section not found" });
           }
-         });
-     }
-     else if (req.method === "GET"){
+          return res
+            .status(200)
+            .json({ message: "Hero section updated", data: updated });
+        } catch (error) {
+          console.error("Error updating Hero section:", error);
+          return res.status(500).json({ error: "Internal server error" });
+        }
+      });
+    } else if (req.method === "DELETE") {
+      if (!id) {
+        return res.status(400).json({ error: "ID is required for deletion." });
+      }
+
       try {
-        if(id){
-          const teamMember = await Team.findById(id);
-          if (!teamMember){
-            return res.status(404).json({error:'Team member not found'});
-          }
-          return res.status(200).json(teamMember);
+        const deleted = await Hero.findByIdAndDelete(id);
+        if (!deleted) {
+          return res.status(404).json({ error: "Hero section not found" });
         }
-        else {
-          const teamMembers = await Team.find().sort({createdAt : -1});
-          return res.status(200).json(teamMembers);
-        }
+        return res.status(200).json({ message: "Hero section deleted" });
       } catch (error) {
-        console.error('Error fetching team members:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error("Error deleting Hero section:", error);
+        return res.status(500).json({ error: "Internal server error" });
       }
-     }
-     else if (req.method === 'PUT'){
-       if (!id){
-          return res.status(400).json({error:'ID is required for update'});
-       }
-       return logMulter(req,res,async ()=>{
-          const {name,designation,linkedin_url,twitter_url,facebook_url,instagram_url} = req.body;
-           const image = req.file ? req.file.path : undefined;
-          const updateData = {
+    } else {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+  },
+  team: async (req, res) => {
+    const id = req.params.id;
+
+    if (req.method === "POST") {
+      return logMulter(req, res, async () => {
+        const {
+          name,
+          designation,
+          linkedin_url,
+          twitter_url,
+          facebook_url,
+          instagram_url,
+          title,
+        } = req.body;
+        const image =
+          req.files && req.files.image && req.files.image.length > 0
+            ? req.files.image[0].path
+            : null;
+        if (!name || !designation || !image) {
+          return res.status(400).json({
+            error: "Name, Designation, and Image are required.",
+          });
+        }
+
+        try {
+          const newTeamMember = new Team({
             name,
             designation,
+            image,
             linkedin_url,
             twitter_url,
             facebook_url,
-            instagram_url
-          };
-          if (image){
-            updateData.image = image;
+            instagram_url,
+          });
+          await newTeamMember.save();
+          return res.status(201).json({
+            message: "Team member added",
+            data: newTeamMember,
+          });
+        } catch (error) {
+          console.error("Error saving team member:", error);
+          return res.status(500).json({ error: "Internal server error" });
+        }
+      });
+    } else if (req.method === "GET") {
+      try {
+        if (id) {
+          const teamMember = await Team.findById(id);
+          if (!teamMember) {
+            return res.status(404).json({ error: "Team member not found" });
           }
-          try {
-            const updatedTeamMember = await Team.findByIdAndUpdate(id,updateData,{new:true});
-            if (!updatedTeamMember){
-              return res.status(404).json({ error: 'Team member not found' });
-            }
-            return res.status(200).json({
-              message: 'Team member updated',
-              data: updatedTeamMember,
-            });
-          } catch (error) {
-               console.error('Error updating team member:', error);
-            return res.status(500).json({ error: 'Internal server error' });
-          }
-       });
-     }
-     else if (req.method === 'DELETE') {
-    if (!id) {
-      return res.status(400).json({ error: 'ID is required for deletion.' });
-    }
-
-    try {
-      const deletedTeamMember = await Team.findByIdAndDelete(id);
-      if (!deletedTeamMember) {
-        return res.status(404).json({ error: 'Team member not found' });
+          return res.status(200).json(teamMember);
+        } else {
+          const teamMembers = await Team.find().sort({ createdAt: -1 });
+          return res.status(200).json(teamMembers);
+        }
+      } catch (error) {
+        console.error("Error fetching team members:", error);
+        return res.status(500).json({ error: "Internal server error" });
       }
-      return res.status(200).json({ message: 'Team member deleted' });
-    } catch (error) {
-      console.error('Error deleting team member:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  } else {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
- },
+    } else if (req.method === "PUT") {
+      if (!id) {
+        return res.status(400).json({ error: "ID is required for update" });
+      }
+      return logMulter(req, res, async () => {
+        const {
+          name,
+          designation,
+          linkedin_url,
+          twitter_url,
+          facebook_url,
+          instagram_url,
+        } = req.body;
+        const image = req.file ? req.file.path : undefined;
+        const updateData = {
+          name,
+          designation,
+          linkedin_url,
+          twitter_url,
+          facebook_url,
+          instagram_url,
+        };
+        if (image) {
+          updateData.image = image;
+        }
+        try {
+          const updatedTeamMember = await Team.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true }
+          );
+          if (!updatedTeamMember) {
+            return res.status(404).json({ error: "Team member not found" });
+          }
+          return res.status(200).json({
+            message: "Team member updated",
+            data: updatedTeamMember,
+          });
+        } catch (error) {
+          console.error("Error updating team member:", error);
+          return res.status(500).json({ error: "Internal server error" });
+        }
+      });
+    } else if (req.method === "DELETE") {
+      if (!id) {
+        return res.status(400).json({ error: "ID is required for deletion." });
+      }
 
+      try {
+        const deletedTeamMember = await Team.findByIdAndDelete(id);
+        if (!deletedTeamMember) {
+          return res.status(404).json({ error: "Team member not found" });
+        }
+        return res.status(200).json({ message: "Team member deleted" });
+      } catch (error) {
+        console.error("Error deleting team member:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    } else {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+  },
 
   productsList: (req, res) => {},
 
@@ -599,88 +619,80 @@ hero: async (req, res) => {
     }
   },
 
- serviceSection: async (req, res) => {
-  const id = req.params.id;
+  serviceSection: async (req, res) => {
+    const id = req.params.id;
 
-  try {
-    if (req.method === "GET") {
-      const data = await ServiceSection.findOne();
-      return res.status(200).json(data);
-    }
+    try {
+      if (req.method === "GET") {
+        const data = await ServiceSection.findOne();
+        return res.status(200).json(data);
+      } else if (req.method === "POST") {
+        const {
+          sectionTitle,
+          itServicesTitle,
+          productsTitle,
+          itServices,
+          products,
+        } = req.body;
 
-    else if (req.method === "POST") {
-      const {
-        sectionTitle,
-        itServicesTitle,
-        productsTitle,
-        itServices,
-        products
-      } = req.body;
+        if (!sectionTitle || !itServicesTitle) {
+          return res.status(400).json({
+            error: "sectionTitle and itServicesTitle are required.",
+          });
+        }
 
-      if (!sectionTitle || !itServicesTitle) {
-        return res.status(400).json({
-          error: "sectionTitle and itServicesTitle are required."
+        const newSection = new ServiceSection({
+          sectionTitle,
+          itServicesTitle,
+          productsTitle: productsTitle || "",
+          itServices: itServices || [],
+          products: products || [],
         });
+
+        await newSection.save();
+        return res.status(201).json({
+          message: "Service section added",
+          data: newSection,
+        });
+      } else if (req.method === "PUT") {
+        if (!id) {
+          return res.status(400).json({ error: "ID is required for update." });
+        }
+
+        const updated = await ServiceSection.findByIdAndUpdate(id, req.body, {
+          new: true,
+        });
+
+        if (!updated) {
+          return res.status(404).json({ error: "Section not found." });
+        }
+
+        return res.status(200).json({
+          message: "Service section updated",
+          data: updated,
+        });
+      } else if (req.method === "DELETE") {
+        if (!id) {
+          return res
+            .status(400)
+            .json({ error: "ID is required for deletion." });
+        }
+
+        const deleted = await ServiceSection.findByIdAndDelete(id);
+
+        if (!deleted) {
+          return res.status(404).json({ error: "Section not found." });
+        }
+
+        return res.status(200).json({ message: "Service section deleted" });
+      } else {
+        return res.status(405).json({ error: "Method not allowed" });
       }
-
-      const newSection = new ServiceSection({
-        sectionTitle,
-        itServicesTitle,
-        productsTitle: productsTitle || "",  
-        itServices: itServices || [],
-        products: products || []             
-      });
-
-      await newSection.save();
-      return res.status(201).json({
-        message: "Service section added",
-        data: newSection
-      });
+    } catch (error) {
+      console.error("ServiceSection API error:", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
-
-    else if (req.method === "PUT") {
-      if (!id) {
-        return res.status(400).json({ error: "ID is required for update." });
-      }
-
-      const updated = await ServiceSection.findByIdAndUpdate(id, req.body, {
-        new: true
-      });
-
-      if (!updated) {
-        return res.status(404).json({ error: "Section not found." });
-      }
-
-      return res.status(200).json({
-        message: "Service section updated",
-        data: updated
-      });
-    }
-
-    else if (req.method === "DELETE") {
-      if (!id) {
-        return res.status(400).json({ error: "ID is required for deletion." });
-      }
-
-      const deleted = await ServiceSection.findByIdAndDelete(id);
-
-      if (!deleted) {
-        return res.status(404).json({ error: "Section not found." });
-      }
-
-      return res.status(200).json({ message: "Service section deleted" });
-    }
-
-    else {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
-
-  } catch (error) {
-    console.error("ServiceSection API error:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-},
-
+  },
 
   collaboration: async (req, res) => {
     const id = req.params.id;
@@ -1206,95 +1218,94 @@ hero: async (req, res) => {
     }
   },
   footer: async (req, res) => {
-  const id = req.params.id;
+    const id = req.params.id;
 
-  if (req.method === "POST") {
-    try {
-      const {
-        socialLinks,
-        sectionTitles,
-        menuLinks,
-        productLinks,
-        branch,
-        copyright,
-        policyLinks,
-      } = req.body;
+    if (req.method === "POST") {
+      try {
+        const {
+          socialLinks,
+          sectionTitles,
+          menuLinks,
+          productLinks,
+          branch,
+          copyright,
+          policyLinks,
+        } = req.body;
 
-      const cleanProductLinks =
-        req.body["productLinks"] || req.body["productLinks\t"];
+        const cleanProductLinks =
+          req.body["productLinks"] || req.body["productLinks\t"];
 
-      if (
-        !socialLinks ||
-        !sectionTitles ||
-        !menuLinks ||
-        !cleanProductLinks ||
-        !branch ||
-        !policyLinks
-      ) {
+        if (
+          !socialLinks ||
+          !sectionTitles ||
+          !menuLinks ||
+          !cleanProductLinks ||
+          !branch ||
+          !policyLinks
+        ) {
+          return res
+            .status(400)
+            .json({ error: "All required fields must be provided." });
+        }
+
+        const newFooter = new Footer({
+          socialLinks: JSON.parse(socialLinks),
+          sectionTitles: JSON.parse(sectionTitles.replace(/^json/, "")),
+          menuLinks: JSON.parse(menuLinks),
+          productLinks: JSON.parse(cleanProductLinks),
+          branch: JSON.parse(branch),
+          policyLinks: JSON.parse(policyLinks),
+          copyright,
+        });
+
+        await newFooter.save();
         return res
-          .status(400)
-          .json({ error: "All required fields must be provided." });
+          .status(201)
+          .json({ message: "Footer saved successfully", data: newFooter });
+      } catch (error) {
+        console.error("Error saving footer:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    } else if (req.method === "GET") {
+      try {
+        const footers = await Footer.find().sort({ _id: -1 });
+        return res.status(200).json(footers);
+      } catch (error) {
+        console.error("Error fetching footer:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    } else if (req.method === "PUT") {
+      if (!id) {
+        return res.status(400).json({ error: "ID is required for update." });
       }
 
-      const newFooter = new Footer({
-        socialLinks: JSON.parse(socialLinks),
-        sectionTitles: JSON.parse(sectionTitles.replace(/^json/, "")),
-        menuLinks: JSON.parse(menuLinks),
-        productLinks: JSON.parse(cleanProductLinks),
-        branch: JSON.parse(branch),
-        policyLinks: JSON.parse(policyLinks),
-        copyright,
-      });
+      try {
+        const updated = await Footer.findByIdAndUpdate(id, req.body, {
+          new: true,
+        });
+        return res
+          .status(200)
+          .json({ message: "Footer updated", data: updated });
+      } catch (error) {
+        console.error("Error updating footer:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    } else if (req.method === "DELETE") {
+      if (!id) {
+        return res.status(400).json({ error: "ID is required for deletion." });
+      }
 
-      await newFooter.save();
-      return res
-        .status(201)
-        .json({ message: "Footer saved successfully", data: newFooter });
-    } catch (error) {
-      console.error("Error saving footer:", error);
-      return res.status(500).json({ error: "Internal server error" });
+      try {
+        await Footer.findByIdAndDelete(id);
+        return res.status(200).json({ message: "Footer deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting footer:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    } else {
+      return res.status(405).json({ error: "Method not allowed" });
     }
-  } else if (req.method === "GET") {
-    try {
-      const footers = await Footer.find().sort({ _id: -1 });
-      return res.status(200).json(footers);
-    } catch (error) {
-      console.error("Error fetching footer:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  } else if (req.method === "PUT") {
-    if (!id) {
-      return res.status(400).json({ error: "ID is required for update." });
-    }
-
-    try {
-      const updated = await Footer.findByIdAndUpdate(id, req.body, {
-        new: true,
-      });
-      return res
-        .status(200)
-        .json({ message: "Footer updated", data: updated });
-    } catch (error) {
-      console.error("Error updating footer:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  } else if (req.method === "DELETE") {
-    if (!id) {
-      return res.status(400).json({ error: "ID is required for deletion." });
-    }
-
-    try {
-      await Footer.findByIdAndDelete(id);
-      return res.status(200).json({ message: "Footer deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting footer:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  } else {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-},
-
+  },
 
   about: async (req, res) => {
     const id = req.params.id;
@@ -1443,12 +1454,13 @@ hero: async (req, res) => {
 
       if (!mainTitle || !highlight || !suffix || !Array.isArray(values)) {
         return res.status(400).json({
-          error: "All fields (mainTitle, highlight, suffix, values[]) are required.",
+          error:
+            "All fields (mainTitle, highlight, suffix, values[]) are required.",
         });
       }
 
       try {
-        const newValue = new Value({ mainTitle, highlight, suffix, values  });
+        const newValue = new Value({ mainTitle, highlight, suffix, values });
         await newValue.save();
         return res
           .status(201)
@@ -1457,18 +1469,17 @@ hero: async (req, res) => {
         console.error("Error saving value:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-   } else if (req.method === "GET") {
-  try {
-    const value = await Value.findOne().sort({ _id: -1 }); // ✅ only one
-    if (!value) return res.status(404).json({ error: "No values found" });
+    } else if (req.method === "GET") {
+      try {
+        const value = await Value.findOne().sort({ _id: -1 }); // ✅ only one
+        if (!value) return res.status(404).json({ error: "No values found" });
 
-    return res.status(200).json(value); // ✅ send one object
-  } catch (error) {
-    console.error("Error fetching value:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-}
-  else if (req.method === "PUT") {
+        return res.status(200).json(value); // ✅ send one object
+      } catch (error) {
+        console.error("Error fetching value:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    } else if (req.method === "PUT") {
       if (!id) {
         return res.status(400).json({ error: "ID is required for update." });
       }
