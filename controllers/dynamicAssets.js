@@ -16,6 +16,7 @@ const Client = require("../models/clientModel");
 const About = require("../models/aboutModel");
 const Value = require("../models/valueModel");
 const Team = require("../models/teamModel");
+const mongoose = require('mongoose');
 
 const logMulter = (req, res, next) => {
   upload.fields([
@@ -562,62 +563,136 @@ module.exports = {
 
   productsList: (req, res) => {},
 
-  service: async (req, res) => {
-    const id = req.params.id;
+  service : async (req, res) => {
+  const id = req.params.id; // Parent Service document ID
+  const itemId = req.params.itemId; // ID of the individual service item in the services array
 
-    try {
-      if (req.method === "GET") {
-        const data = await Service.find().sort({ _id: -1 });
-        return res.status(200).json(data);
-      } else if (req.method === "POST") {
-        const {
-          sectionTitle,
-          heading,
-          subtitle,
-          services,
-          topBanner,
-          callToAction,
-        } = req.body;
-        if (
-          !sectionTitle ||
-          !heading ||
-          !subtitle ||
-          !Array.isArray(services)
-        ) {
-          return res.status(400).json({ error: "Missing required fields" });
-        }
-        const newService = new Service({
-          sectionTitle,
-          heading,
-          subtitle,
-          services,
-          topBanner,
-          callToAction,
-        });
-        await newService.save();
-        return res
-          .status(201)
-          .json({ message: "Service content created", data: newService });
-      } else if (req.method === "PUT") {
-        const updated = await Service.findByIdAndUpdate(id, req.body, {
-          new: true,
-        });
-        if (!updated) return res.status(404).json({ error: "Not found" });
-        return res
-          .status(200)
-          .json({ message: "Updated successfully", data: updated });
-      } else if (req.method === "DELETE") {
-        const deleted = await Service.findByIdAndDelete(id);
-        if (!deleted) return res.status(404).json({ error: "Not found" });
-        return res.status(200).json({ message: "Deleted successfully" });
-      } else {
-        return res.status(405).json({ error: "Method not allowed" });
-      }
-    } catch (err) {
-      console.error("Service error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+  try {
+    // GET: Fetch all Service documents
+    if (req.method === 'GET' && !id) {
+      const data = await Service.find().sort({ _id: -1 });
+      return res.status(200).json(data);
     }
-  },
+
+    // GET: Fetch a specific service item by itemId
+    if (req.method === 'GET' && id && itemId && req.path.includes('/service-item')) {
+      const service = await Service.findById(id);
+      if (!service) {
+        return res.status(404).json({ error: 'Service not found' });
+      }
+      const serviceItem = service.services.id(itemId);
+      if (!serviceItem) {
+        return res.status(404).json({ error: 'Service item not found' });
+      }
+      return res.status(200).json(serviceItem);
+    }
+
+    // POST: Create a new Service document
+    if (req.method === 'POST' && !id) {
+      const { sectionTitle, heading, subtitle, services, topBanner, callToAction } = req.body;
+      if (!sectionTitle || !heading || !subtitle || !Array.isArray(services)) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      const newService = new Service({
+        sectionTitle,
+        heading,
+        subtitle,
+        services: services.map((service) => ({
+          ...service,
+          _id: new mongoose.Types.ObjectId(), // Generate _id for each service item
+        })),
+        topBanner,
+        callToAction,
+      });
+      await newService.save();
+      return res.status(201).json({ message: 'Service content created', data: newService });
+    }
+
+    // POST: Add a new service item to the services array
+    if (req.method === 'POST' && id && req.path.includes('/service-item')) {
+      const { title, description, icon } = req.body;
+      if (!title || !description) {
+        return res.status(400).json({ error: 'Title and description are required' });
+      }
+      const updated = await Service.findByIdAndUpdate(
+        id,
+        {
+          $push: {
+            services: {
+              _id: new mongoose.Types.ObjectId(),
+              title,
+              description,
+              icon,
+            },
+          },
+          updatedAt: Date.now(),
+        },
+        { new: true }
+      );
+      if (!updated) return res.status(404).json({ error: 'Service not found' });
+      return res.status(201).json({ message: 'Service item added', data: updated });
+    }
+
+    // PUT: Update the entire Service document
+    if (req.method === 'PUT' && id && !req.path.includes('/service-item')) {
+      const updated = await Service.findByIdAndUpdate(
+        id,
+        { ...req.body, updatedAt: Date.now() },
+        { new: true }
+      );
+      if (!updated) return res.status(404).json({ error: 'Not found' });
+      return res.status(200).json({ message: 'Updated successfully', data: updated });
+    }
+
+    // PUT: Update a specific service item in the services array
+    if (req.method === 'PUT' && id && itemId && req.path.includes('/service-item')) {
+      const { title, description, icon } = req.body;
+      if (!title || !description) {
+        return res.status(400).json({ error: 'Title and description are required' });
+      }
+      const updated = await Service.findOneAndUpdate(
+        { _id: id, 'services._id': itemId },
+        {
+          $set: {
+            'services.$.title': title,
+            'services.$.description': description,
+            'services.$.icon': icon || undefined,
+            updatedAt: Date.now(),
+          },
+        },
+        { new: true }
+      );
+      if (!updated) return res.status(404).json({ error: 'Service or service item not found' });
+      return res.status(200).json({ message: 'Service item updated', data: updated });
+    }
+
+    // DELETE: Delete the entire Service document
+    if (req.method === 'DELETE' && id && !req.path.includes('/service-item')) {
+      const deleted = await Service.findByIdAndDelete(id);
+      if (!deleted) return res.status(404).json({ error: 'Not found' });
+      return res.status(200).json({ message: 'Deleted successfully' });
+    }
+
+    // DELETE: Delete a specific service item from the services array
+    if (req.method === 'DELETE' && id && itemId && req.path.includes('/service-item')) {
+      const updated = await Service.findByIdAndUpdate(
+        id,
+        {
+          $pull: { services: { _id: itemId } },
+          updatedAt: Date.now(),
+        },
+        { new: true }
+      );
+      if (!updated) return res.status(404).json({ error: 'Service or service item not found' });
+      return res.status(200).json({ message: 'Service item deleted', data: updated });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (err) {
+    console.error('Service error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+},
 
   serviceSection: async (req, res) => {
     const id = req.params.id;
