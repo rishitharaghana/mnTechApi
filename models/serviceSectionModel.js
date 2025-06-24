@@ -1,15 +1,15 @@
 const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  icon: { type: String, required: true },
+  title: { type: String,  },
+  description: { type: String, },
+  icon: { type: String,  },
 });
 
 const serviceSchema = new mongoose.Schema(
   {
-    sectionTitle: { type: String, required: true },       
-    itServicesTitle: { type: String, required: true },    
+    sectionTitle: { type: String, },       
+    itServicesTitle: { type: String, },    
     productsTitle: { type: String,},   
     itServices: [itemSchema],
     products: [itemSchema],

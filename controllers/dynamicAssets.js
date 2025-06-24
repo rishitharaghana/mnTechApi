@@ -695,79 +695,112 @@ module.exports = {
 },
 
   serviceSection: async (req, res) => {
-    const id = req.params.id;
+  const { id, itemId, type } = req.params;
 
-    try {
-      if (req.method === "GET") {
-        const data = await ServiceSection.findOne();
-        return res.status(200).json(data);
-      } else if (req.method === "POST") {
-        const {
-          sectionTitle,
-          itServicesTitle,
-          productsTitle,
-          itServices,
-          products,
-        } = req.body;
-
-        if (!sectionTitle || !itServicesTitle) {
-          return res.status(400).json({
-            error: "sectionTitle and itServicesTitle are required.",
-          });
-        }
-
-        const newSection = new ServiceSection({
-          sectionTitle,
-          itServicesTitle,
-          productsTitle: productsTitle || "",
-          itServices: itServices || [],
-          products: products || [],
-        });
-
-        await newSection.save();
-        return res.status(201).json({
-          message: "Service section added",
-          data: newSection,
-        });
-      } else if (req.method === "PUT") {
-        if (!id) {
-          return res.status(400).json({ error: "ID is required for update." });
-        }
-
-        const updated = await ServiceSection.findByIdAndUpdate(id, req.body, {
-          new: true,
-        });
-
-        if (!updated) {
-          return res.status(404).json({ error: "Section not found." });
-        }
-
-        return res.status(200).json({
-          message: "Service section updated",
-          data: updated,
-        });
-      } else if (req.method === "DELETE") {
-        if (!id) {
-          return res
-            .status(400)
-            .json({ error: "ID is required for deletion." });
-        }
-
-        const deleted = await ServiceSection.findByIdAndDelete(id);
-
-        if (!deleted) {
-          return res.status(404).json({ error: "Section not found." });
-        }
-
-        return res.status(200).json({ message: "Service section deleted" });
-      } else {
-        return res.status(405).json({ error: "Method not allowed" });
-      }
-    } catch (error) {
-      console.error("ServiceSection API error:", error);
-      return res.status(500).json({ error: "Internal server error" });
+  try {
+    // GET section
+    if (req.method === "GET" && !id) {
+      const data = await ServiceSection.findOne();
+      return res.status(200).json(data);
     }
-  },
+
+    // POST new section
+    if (req.method === "POST" && !id) {
+      const {
+        sectionTitle,
+        itServicesTitle,
+        productsTitle,
+        itServices,
+        products,
+      } = req.body;
+
+      if (!sectionTitle || !itServicesTitle) {
+        return res.status(400).json({
+          error: "sectionTitle and itServicesTitle are required.",
+        });
+      }
+
+      const newSection = new ServiceSection({
+        sectionTitle,
+        itServicesTitle,
+        productsTitle: productsTitle || "",
+        itServices: itServices || [],
+        products: products || [],
+      });
+
+      await newSection.save();
+      return res.status(201).json({
+        message: "Service section added",
+        data: newSection,
+      });
+    }
+
+    // PUT entire section
+    if (req.method === "PUT" && id && !type) {
+      const updated = await ServiceSection.findByIdAndUpdate(id, req.body, {
+        new: true,
+      });
+
+      if (!updated) return res.status(404).json({ error: "Section not found." });
+
+      return res.status(200).json({
+        message: "Service section updated",
+        data: updated,
+      });
+    }
+
+    if (req.method === "DELETE" && id && !type) {
+      const deleted = await ServiceSection.findByIdAndDelete(id);
+      if (!deleted) return res.status(404).json({ error: "Section not found." });
+
+      return res.status(200).json({ message: "Service section deleted" });
+    }
+
+    if (req.method === "POST" && id && type) {
+      const { icon, title, description } = req.body;
+      if (!["itServices", "products"].includes(type)) {
+        return res.status(400).json({ error: "Invalid type" });
+      }
+
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: "Section not found" });
+
+      section[type].push({ icon, title, description });
+      await section.save();
+
+      return res.status(200).json({ message: `${type} item added`, data: section });
+    }
+
+    if (req.method === "PUT" && id && itemId && type) {
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: "Section not found" });
+
+      const item = section[type].id(itemId);
+      if (!item) return res.status(404).json({ error: "Item not found" });
+
+      Object.assign(item, req.body);
+      await section.save();
+
+      return res.status(200).json({ message: `${type} item updated`, data: section });
+    }
+
+    if (req.method === "DELETE" && id && itemId && type) {
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: "Section not found" });
+
+      section[type] = section[type].filter((i) => i._id.toString() !== itemId);
+      await section.save();
+
+      return res.status(200).json({ message: `${type} item deleted`, data: section });
+    }
+
+    return res.status(405).json({ error: "Method not allowed" });
+  } catch (error) {
+    console.error("ServiceSection API error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+},
+
 
   collaboration: async (req, res) => {
     const id = req.params.id;
