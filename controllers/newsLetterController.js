@@ -20,9 +20,16 @@ const subscribeToNewsletter = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ message: "Server error", error: err.message });
   }
-  getAllNewsLetterSubsctiptions: async(req, res) =>{
+ 
+};
 
+const getAllSubscribers = async (req, res) => {
+  try {
+    const subscribers = await NewsLetterSubscribe.find().sort({ createdAt: -1 });
+    res.status(200).json(subscribers);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch subscribers", error: err.message });
   }
 };
 
-module.exports = { subscribeToNewsletter };
+module.exports = { subscribeToNewsletter,getAllSubscribers };
