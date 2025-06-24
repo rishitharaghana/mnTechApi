@@ -563,61 +563,105 @@ module.exports = {
   productsList: (req, res) => {},
 
   service: async (req, res) => {
-    const id = req.params.id;
+  const { id, itemId } = req.params;
 
-    try {
-      if (req.method === "GET") {
-        const data = await Service.find().sort({ _id: -1 });
-        return res.status(200).json(data);
-      } else if (req.method === "POST") {
-        const {
-          sectionTitle,
-          heading,
-          subtitle,
-          services,
-          topBanner,
-          callToAction,
-        } = req.body;
-        if (
-          !sectionTitle ||
-          !heading ||
-          !subtitle ||
-          !Array.isArray(services)
-        ) {
-          return res.status(400).json({ error: "Missing required fields" });
-        }
-        const newService = new Service({
-          sectionTitle,
-          heading,
-          subtitle,
-          services,
-          topBanner,
-          callToAction,
-        });
-        await newService.save();
-        return res
-          .status(201)
-          .json({ message: "Service content created", data: newService });
-      } else if (req.method === "PUT") {
-        const updated = await Service.findByIdAndUpdate(id, req.body, {
-          new: true,
-        });
-        if (!updated) return res.status(404).json({ error: "Not found" });
-        return res
-          .status(200)
-          .json({ message: "Updated successfully", data: updated });
-      } else if (req.method === "DELETE") {
-        const deleted = await Service.findByIdAndDelete(id);
-        if (!deleted) return res.status(404).json({ error: "Not found" });
-        return res.status(200).json({ message: "Deleted successfully" });
-      } else {
-        return res.status(405).json({ error: "Method not allowed" });
-      }
-    } catch (err) {
-      console.error("Service error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+  try {
+    if (req.method === "GET" && !id) {
+      const data = await Service.find().sort({ _id: -1 });
+      return res.status(200).json(data);
     }
-  },
+
+    if (req.method === "POST" && !id) {
+      const {
+        sectionTitle,
+        heading,
+        subtitle,
+        services,
+        topBanner,
+        callToAction,
+      } = req.body;
+
+      if (
+        !sectionTitle ||
+        !heading ||
+        !subtitle ||
+        !Array.isArray(services)
+      ) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const newService = new Service({
+        sectionTitle,
+        heading,
+        subtitle,
+        services,
+        topBanner,
+        callToAction,
+      });
+      await newService.save();
+      return res
+        .status(201)
+        .json({ message: "Service content created", data: newService });
+    }
+
+    if (req.method === "PUT" && id && !itemId) {
+      const updated = await Service.findByIdAndUpdate(id, req.body, { new: true });
+      if (!updated) return res.status(404).json({ error: "Not found" });
+      return res.status(200).json({ message: "Updated successfully", data: updated });
+    }
+
+    if (req.method === "DELETE" && id && !itemId) {
+      const deleted = await Service.findByIdAndDelete(id);
+      if (!deleted) return res.status(404).json({ error: "Not found" });
+      return res.status(200).json({ message: "Deleted successfully" });
+    }
+
+    if (req.method === "POST" && id && !itemId) {
+      const { icon, title, description } = req.body;
+      if (!icon || !title) return res.status(400).json({ error: "Missing icon or title" });
+
+      const service = await Service.findById(id);
+      if (!service) return res.status(404).json({ error: "Service not found" });
+
+      service.services.push({ icon, title, description });
+      await service.save();
+
+      return res.status(200).json({ message: "Service item added", data: service });
+    }
+
+    // UPDATE SERVICE ITEM
+    if (req.method === "PUT" && id && itemId) {
+      const service = await Service.findById(id);
+      if (!service) return res.status(404).json({ error: "Service not found" });
+
+      const item = service.services.id(itemId);
+      if (!item) return res.status(404).json({ error: "Item not found" });
+
+      Object.assign(item, req.body);
+      await service.save();
+
+      return res.status(200).json({ message: "Service item updated", data: service });
+    }
+
+    // DELETE SERVICE ITEM
+    if (req.method === "DELETE" && id && itemId) {
+      const service = await Service.findById(id);
+      if (!service) return res.status(404).json({ error: "Service not found" });
+
+      service.services = service.services.filter((s) => s._id.toString() !== itemId);
+      await service.save();
+
+      return res.status(200).json({ message: "Service item deleted", data: service });
+    }
+
+    return res.status(405).json({ error: "Method not allowed" });
+
+  } catch (err) {
+    console.error("Service error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+},
+
 
   serviceSection: async (req, res) => {
     const id = req.params.id;
@@ -871,8 +915,83 @@ module.exports = {
 
   ourSkills: async (req, res) => {
     const id = req.params.id;
+    const skillId = req.params.skillId;
 
-    if (req.method === "POST") {
+    if (req.method === "POST" && id && req.url.endsWith("/skill")) {
+      const { name, percentage } = req.body;
+
+      if (!name || percentage === undefined) {
+        return res
+          .status(400)
+          .json({ error: "Name and percentage are required." });
+      }
+
+      if (percentage < 0 || percentage > 100) {
+        return res
+          .status(400)
+          .json({ error: "Percentage must be between 0 and 100." });
+      }
+
+      try {
+        const updated = await OurSkills.findByIdAndUpdate(
+          id,
+          { $push: { skills: { name, percentage } } },
+          { new: true }
+        );
+
+        if (!updated)
+          return res.status(404).json({ error: "OurSkills not found" });
+
+        return res.status(200).json({ message: "Skill added", data: updated });
+      } catch (error) {
+        console.error("Error adding skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    // 🔹 Update a specific skill item
+    else if (req.method === "PUT" && id && skillId) {
+      const { name, percentage } = req.body;
+
+      try {
+        const doc = await OurSkills.findById(id);
+        if (!doc) return res.status(404).json({ error: "OurSkills not found" });
+
+        const skill = doc.skills.id(skillId);
+        if (!skill) return res.status(404).json({ error: "Skill not found" });
+
+        if (name) skill.name = name;
+        if (percentage !== undefined) skill.percentage = percentage;
+
+        await doc.save();
+        return res.status(200).json({ message: "Skill updated", data: doc });
+      } catch (error) {
+        console.error("Error updating skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    // 🔹 Delete a specific skill item
+    else if (req.method === "DELETE" && id && skillId) {
+      try {
+        const doc = await OurSkills.findById(id);
+        if (!doc) return res.status(404).json({ error: "OurSkills not found" });
+
+        const skill = doc.skills.id(skillId);
+        if (!skill) return res.status(404).json({ error: "Skill not found" });
+
+      doc.skills.pull({ _id: skillId });
+
+        await doc.save();
+        return res.status(200).json({ message: "Skill deleted", data: doc });
+      } catch (error) {
+        console.error("Error deleting skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    // 🔹 Create new skill section
+    else if (req.method === "POST") {
       const { title, highlight, description, skills, buttonText, buttonLink } =
         req.body;
 
@@ -905,7 +1024,10 @@ module.exports = {
         console.error("Error saving skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else if (req.method === "GET") {
+    }
+
+    // 🔹 Get latest skill section
+    else if (req.method === "GET") {
       try {
         const result = await OurSkills.findOne().sort({ _id: -1 });
         return res.status(200).json(result);
@@ -913,9 +1035,13 @@ module.exports = {
         console.error("Error fetching skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else if (req.method === "PUT") {
+    }
+
+    // 🔹 Update entire section
+    else if (req.method === "PUT") {
       if (!id)
         return res.status(400).json({ error: "ID is required for update." });
+
       try {
         const updated = await OurSkills.findByIdAndUpdate(id, req.body, {
           new: true,
@@ -927,9 +1053,12 @@ module.exports = {
         console.error("Error updating skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else if (req.method === "DELETE") {
+    }
+
+    else if (req.method === "DELETE") {
       if (!id)
         return res.status(400).json({ error: "ID is required for deletion." });
+
       try {
         await OurSkills.findByIdAndDelete(id);
         return res.status(200).json({ message: "Skill section deleted" });
@@ -937,7 +1066,9 @@ module.exports = {
         console.error("Error deleting skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else {
+    }
+
+    else {
       return res.status(405).json({ error: "Method not allowed" });
     }
   },
@@ -1217,6 +1348,7 @@ module.exports = {
       return res.status(405).json({ error: "Method not allowed" });
     }
   },
+
   footer: async (req, res) => {
     const id = req.params.id;
 

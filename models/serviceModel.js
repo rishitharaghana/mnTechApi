@@ -17,7 +17,8 @@ const serviceSchema = new mongoose.Schema({
   services: [
     {
       title: { type: String, required: true },
-      description: { type: String, required: true },
+      description: { type: String, },
+       icon: { type: String }
     },
   ],
 }, { timestamps: true });
