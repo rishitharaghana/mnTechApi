@@ -25,13 +25,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use((req, res, next) => {
-  console.log(
-    "Registered routes:",
-    app._router.stack.map((r) => r.route?.path || r.regexp)
-  );
-  next();
-});
+
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 mongoose
