@@ -37,6 +37,7 @@ router.get("/ourSkills", dynamicAssetsController.ourSkills);
 router.put("/ourSkills/:id", dynamicAssetsController.ourSkills);
 router.delete("/ourSkills/:id", dynamicAssetsController.ourSkills);
 
+router.get("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills);
 router.post("/ourSkills/:id/skill", dynamicAssetsController.ourSkills); 
 router.put("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills); 
 router.delete("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills);
