@@ -59,7 +59,6 @@ router.put("/client/:id", dynamicAssetsController.client);
 router.delete("/client/:id", dynamicAssetsController.client);
 router.post("/service", dynamicAssetsController.service);
 router.get('/service', dynamicAssetsController.service); 
-router.post('/service', dynamicAssetsController.service); 
 router.put('/service/:id', dynamicAssetsController.service); 
 router.delete('/service/:id', dynamicAssetsController.service); 
 
