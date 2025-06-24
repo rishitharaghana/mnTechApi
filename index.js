@@ -42,6 +42,8 @@ const dynamicAssetsRoutes = require("./routes/dynamicAssetsRoutes");
 app.use("/dynamic", dynamicAssetsRoutes);
 const newsLetterRoutes = require("./routes/newsLetterRoutes");
 app.use("/newsLetter", newsLetterRoutes);
+const authRoutes = require("./routes/authRoutes");
+app.use("/auth",authRoutes);
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
