@@ -6,27 +6,37 @@ router.post("/navigation", dynamicAssetsController.navigation);
 router.get("/navigation", dynamicAssetsController.navigation);
 router.put("/navigation/:id", dynamicAssetsController.navigation);
 router.delete("/navigation/:id", dynamicAssetsController.navigation);
+
 router.post("/saasApplication", dynamicAssetsController.saasApplication);
 router.get("/saasApplication", dynamicAssetsController.saasApplication);
 router.put("/saasApplication/:id", dynamicAssetsController.saasApplication);
 router.delete("/saasApplication/:id", dynamicAssetsController.saasApplication);
+
 router.post("/serviceSection", dynamicAssetsController.serviceSection);
 router.get("/serviceSection", dynamicAssetsController.serviceSection);
 router.put("/serviceSection/:id", dynamicAssetsController.serviceSection);
 router.delete("/serviceSection/:id", dynamicAssetsController.serviceSection);
+
 router.post("/collaboration", dynamicAssetsController.collaboration);
 router.get("/collaboration", dynamicAssetsController.collaboration);
 router.put("/collaboration/:id", dynamicAssetsController.collaboration);
 router.delete("/collaboration/:id", dynamicAssetsController.collaboration);
+
 router.post("/review", dynamicAssetsController.review);
 router.get("/review", dynamicAssetsController.review);
 router.get("/review/:id", dynamicAssetsController.review);
 router.put("/review/:id", dynamicAssetsController.review);
 router.delete("/review/:id", dynamicAssetsController.review);
+
 router.post("/ourSkills", dynamicAssetsController.ourSkills);
 router.get("/ourSkills", dynamicAssetsController.ourSkills);
 router.put("/ourSkills/:id", dynamicAssetsController.ourSkills);
 router.delete("/ourSkills/:id", dynamicAssetsController.ourSkills);
+
+router.post("/ourSkills/:id/skill", dynamicAssetsController.ourSkills); 
+router.put("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills); 
+router.delete("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills);
+
 router.post("/latestThinking", dynamicAssetsController.latestThinking);
 router.get("/latestThinking", dynamicAssetsController.latestThinking);
 router.put("/latestThinking/:id", dynamicAssetsController.latestThinking);

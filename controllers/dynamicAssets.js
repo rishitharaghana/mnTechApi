@@ -946,8 +946,83 @@ module.exports = {
 
   ourSkills: async (req, res) => {
     const id = req.params.id;
+    const skillId = req.params.skillId;
 
-    if (req.method === "POST") {
+    if (req.method === "POST" && id && req.url.endsWith("/skill")) {
+      const { name, percentage } = req.body;
+
+      if (!name || percentage === undefined) {
+        return res
+          .status(400)
+          .json({ error: "Name and percentage are required." });
+      }
+
+      if (percentage < 0 || percentage > 100) {
+        return res
+          .status(400)
+          .json({ error: "Percentage must be between 0 and 100." });
+      }
+
+      try {
+        const updated = await OurSkills.findByIdAndUpdate(
+          id,
+          { $push: { skills: { name, percentage } } },
+          { new: true }
+        );
+
+        if (!updated)
+          return res.status(404).json({ error: "OurSkills not found" });
+
+        return res.status(200).json({ message: "Skill added", data: updated });
+      } catch (error) {
+        console.error("Error adding skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    // 🔹 Update a specific skill item
+    else if (req.method === "PUT" && id && skillId) {
+      const { name, percentage } = req.body;
+
+      try {
+        const doc = await OurSkills.findById(id);
+        if (!doc) return res.status(404).json({ error: "OurSkills not found" });
+
+        const skill = doc.skills.id(skillId);
+        if (!skill) return res.status(404).json({ error: "Skill not found" });
+
+        if (name) skill.name = name;
+        if (percentage !== undefined) skill.percentage = percentage;
+
+        await doc.save();
+        return res.status(200).json({ message: "Skill updated", data: doc });
+      } catch (error) {
+        console.error("Error updating skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    // 🔹 Delete a specific skill item
+    else if (req.method === "DELETE" && id && skillId) {
+      try {
+        const doc = await OurSkills.findById(id);
+        if (!doc) return res.status(404).json({ error: "OurSkills not found" });
+
+        const skill = doc.skills.id(skillId);
+        if (!skill) return res.status(404).json({ error: "Skill not found" });
+
+      doc.skills.pull({ _id: skillId });
+
+        await doc.save();
+        return res.status(200).json({ message: "Skill deleted", data: doc });
+      } catch (error) {
+        console.error("Error deleting skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    // 🔹 Create new skill section
+    else if (req.method === "POST") {
       const { title, highlight, description, skills, buttonText, buttonLink } =
         req.body;
 
@@ -980,7 +1055,10 @@ module.exports = {
         console.error("Error saving skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else if (req.method === "GET") {
+    }
+
+    // 🔹 Get latest skill section
+    else if (req.method === "GET") {
       try {
         const result = await OurSkills.findOne().sort({ _id: -1 });
         return res.status(200).json(result);
@@ -988,9 +1066,13 @@ module.exports = {
         console.error("Error fetching skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else if (req.method === "PUT") {
+    }
+
+    // 🔹 Update entire section
+    else if (req.method === "PUT") {
       if (!id)
         return res.status(400).json({ error: "ID is required for update." });
+
       try {
         const updated = await OurSkills.findByIdAndUpdate(id, req.body, {
           new: true,
@@ -1002,9 +1084,12 @@ module.exports = {
         console.error("Error updating skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else if (req.method === "DELETE") {
+    }
+
+    else if (req.method === "DELETE") {
       if (!id)
         return res.status(400).json({ error: "ID is required for deletion." });
+
       try {
         await OurSkills.findByIdAndDelete(id);
         return res.status(200).json({ message: "Skill section deleted" });
@@ -1012,7 +1097,9 @@ module.exports = {
         console.error("Error deleting skill section:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else {
+    }
+
+    else {
       return res.status(405).json({ error: "Method not allowed" });
     }
   },
@@ -1292,6 +1379,7 @@ module.exports = {
       return res.status(405).json({ error: "Method not allowed" });
     }
   },
+
   footer: async (req, res) => {
     const id = req.params.id;
 
