@@ -17,6 +17,7 @@ router.get("/serviceSection", dynamicAssetsController.serviceSection);
 router.put("/serviceSection/:id", dynamicAssetsController.serviceSection);
 router.delete("/serviceSection/:id", dynamicAssetsController.serviceSection);
 
+router.get("/serviceSection/:id/:type/:itemId", dynamicAssetsController.serviceSection);
 router.post("/serviceSection/:id/:type", dynamicAssetsController.serviceSection); // type = itServices or products
 router.put("/serviceSection/:id/:type/:itemId", dynamicAssetsController.serviceSection);
 router.delete("/serviceSection/:id/:type/:itemId", dynamicAssetsController.serviceSection);

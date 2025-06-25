@@ -694,146 +694,119 @@ module.exports = {
   }
 },
 
- serviceSection : async (req, res) => {
-  const { id, itemId } = req.params;
-  const isItService = req.path.includes("/it-service-item");
-  const isProduct = req.path.includes("/product-item");
+  serviceSection: async (req, res) => {
+  const { id, itemId, type } = req.params;
 
   try {
-    // GET: Fetch all documents
     if (req.method === "GET" && !id) {
-      const data = await ServiceSection.find().sort({ _id: -1 });
+      const data = await ServiceSection.findOne();
       return res.status(200).json(data);
     }
 
-    // GET: Fetch a specific item
-    if (req.method === "GET" && id && itemId && (isItService || isProduct)) {
-      const section = await ServiceSection.findById(id);
-      if (!section) return res.status(404).json({ error: "Section not found" });
-
-      const item = isItService
-        ? section.itServices.id(itemId)
-        : section.products.id(itemId);
-
-      if (!item) return res.status(404).json({ error: "Item not found" });
-
-      return res.status(200).json(item);
-    }
-
-    // POST: Create full section
     if (req.method === "POST" && !id) {
-      const { sectionTitle, itServicesTitle, productsTitle, itServices, products } = req.body;
+      const {
+        sectionTitle,
+        itServicesTitle,
+        productsTitle,
+        itServices,
+        products,
+      } = req.body;
 
       if (!sectionTitle || !itServicesTitle) {
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({
+          error: "sectionTitle and itServicesTitle are required.",
+        });
       }
 
       const newSection = new ServiceSection({
         sectionTitle,
         itServicesTitle,
-        productsTitle,
-        itServices: (itServices || []).map(item => ({
-          ...item,
-          _id: new mongoose.Types.ObjectId()
-        })),
-        products: (products || []).map(item => ({
-          ...item,
-          _id: new mongoose.Types.ObjectId()
-        }))
+        productsTitle: productsTitle || "",
+        itServices: itServices || [],
+        products: products || [],
       });
 
       await newSection.save();
-      return res.status(201).json({ message: "Section created", data: newSection });
+      return res.status(201).json({
+        message: "Service section added",
+        data: newSection,
+      });
+    }
+    if (req.method === "GET" && id && itemId && type) {
+  const section = await ServiceSection.findById(id);
+  if (!section) return res.status(404).json({ error: "Section not found" });
+
+  const item = section[type]?.id(itemId);
+  if (!item) return res.status(404).json({ error: "Item not found" });
+
+  return res.status(200).json(item);
+}
+
+
+    if (req.method === "PUT" && id && !type) {
+      const updated = await ServiceSection.findByIdAndUpdate(id, req.body, {
+        new: true,
+      });
+
+      if (!updated) return res.status(404).json({ error: "Section not found." });
+
+      return res.status(200).json({
+        message: "Service section updated",
+        data: updated,
+      });
     }
 
-    // POST: Add a new item
-    if (req.method === "POST" && id && (isItService || isProduct)) {
-      const { title, description, icon } = req.body;
-      if (!title || !description) return res.status(400).json({ error: "Missing title/description" });
-
-      const update = {
-        $push: {
-          [isItService ? "itServices" : "products"]: {
-            _id: new mongoose.Types.ObjectId(),
-            title,
-            description,
-            icon
-          }
-        }
-      };
-
-      const updated = await ServiceSection.findByIdAndUpdate(id, update, { new: true });
-      if (!updated) return res.status(404).json({ error: "Section not found" });
-
-      return res.status(201).json({ message: "Item added", data: updated });
-    }
-
-    // PUT: Update full section
-    if (req.method === "PUT" && id && !isItService && !isProduct) {
-      const updated = await ServiceSection.findByIdAndUpdate(id, req.body, { new: true });
-      if (!updated) return res.status(404).json({ error: "Section not found" });
-
-      return res.status(200).json({ message: "Section updated", data: updated });
-    }
-
-    // PUT: Update an individual item
-    if (req.method === "PUT" && id && itemId && (isItService || isProduct)) {
-      const { title, description, icon } = req.body;
-
-      const updated = await ServiceSection.findOneAndUpdate(
-        {
-          _id: id,
-          [`${isItService ? "itServices" : "products"}._id`]: itemId
-        },
-        {
-          $set: {
-            [`${isItService ? "itServices" : "products"}.$.title`]: title,
-            [`${isItService ? "itServices" : "products"}.$.description`]: description,
-            [`${isItService ? "itServices" : "products"}.$.icon`]: icon
-          }
-        },
-        { new: true }
-      );
-
-      if (!updated) return res.status(404).json({ error: "Item not found" });
-
-      return res.status(200).json({ message: "Item updated", data: updated });
-    }
-
-    // DELETE: Delete full section
-    if (req.method === "DELETE" && id && !isItService && !isProduct) {
+    if (req.method === "DELETE" && id && !type) {
       const deleted = await ServiceSection.findByIdAndDelete(id);
-      if (!deleted) return res.status(404).json({ error: "Section not found" });
+      if (!deleted) return res.status(404).json({ error: "Section not found." });
 
-      return res.status(200).json({ message: "Section deleted" });
+      return res.status(200).json({ message: "Service section deleted" });
     }
 
-    // DELETE: Delete an item
-    if (req.method === "DELETE" && id && itemId && (isItService || isProduct)) {
-      const pullField = isItService ? "itServices" : "products";
+    if (req.method === "POST" && id && type) {
+      const { icon, title, description } = req.body;
+      if (!["itServices", "products"].includes(type)) {
+        return res.status(400).json({ error: "Invalid type" });
+      }
 
-      const updated = await ServiceSection.findByIdAndUpdate(
-        id,
-        {
-          $pull: {
-            [pullField]: { _id: itemId }
-          }
-        },
-        { new: true }
-      );
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: "Section not found" });
 
-      if (!updated) return res.status(404).json({ error: "Section or item not found" });
+      section[type].push({ icon, title, description });
+      await section.save();
 
-      return res.status(200).json({ message: "Item deleted", data: updated });
+      return res.status(200).json({ message: `${type} item added`, data: section });
+    }
+
+    if (req.method === "PUT" && id && itemId && type) {
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: "Section not found" });
+
+      const item = section[type].id(itemId);
+      if (!item) return res.status(404).json({ error: "Item not found" });
+
+      Object.assign(item, req.body);
+      await section.save();
+
+      return res.status(200).json({ message: `${type} item updated`, data: section });
+    }
+
+    if (req.method === "DELETE" && id && itemId && type) {
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: "Section not found" });
+
+      section[type] = section[type].filter((i) => i._id.toString() !== itemId);
+      await section.save();
+
+      return res.status(200).json({ message: `${type} item deleted`, data: section });
     }
 
     return res.status(405).json({ error: "Method not allowed" });
-  } catch (err) {
-    console.error("ServiceSection error:", err);
+  } catch (error) {
+    console.error("ServiceSection API error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 },
-
 
 
   collaboration: async (req, res) => {
@@ -1011,183 +984,165 @@ module.exports = {
     }
   },
 
-ourSkills: async (req, res) => {
-  const id = req.params.id;
-  const skillId = req.params.skillId;
+  ourSkills: async (req, res) => {
+    const id = req.params.id;
+    const skillId = req.params.skillId;
 
-  // 🔹 Get a specific skill item
-  if (req.method === "GET" && id && skillId) {
-    try {
-      const doc = await OurSkills.findById(id);
-      if (!doc) return res.status(404).json({ error: "OurSkills not found" });
+    if (req.method === "POST" && id && req.url.endsWith("/skill")) {
+      const { name, percentage } = req.body;
 
-      const skill = doc.skills.id(skillId);
-      if (!skill) return res.status(404).json({ error: "Skill not found" });
+      if (!name || percentage === undefined) {
+        return res
+          .status(400)
+          .json({ error: "Name and percentage are required." });
+      }
 
-      return res.status(200).json({ message: "Skill retrieved", data: skill });
-    } catch (error) {
-      console.error("Error retrieving skill:", error);
-      return res.status(500).json({ error: "Internal server error" });
+      if (percentage < 0 || percentage > 100) {
+        return res
+          .status(400)
+          .json({ error: "Percentage must be between 0 and 100." });
+      }
+
+      try {
+        const updated = await OurSkills.findByIdAndUpdate(
+          id,
+          { $push: { skills: { name, percentage } } },
+          { new: true }
+        );
+
+        if (!updated)
+          return res.status(404).json({ error: "OurSkills not found" });
+
+        return res.status(200).json({ message: "Skill added", data: updated });
+      } catch (error) {
+        console.error("Error adding skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
-  }
 
-  // 🔹 Add a new skill to the skills array
-  else if (req.method === "POST" && id && req.url.endsWith("/skill")) {
-    const { name, percentage } = req.body;
+    // 🔹 Update a specific skill item
+    else if (req.method === "PUT" && id && skillId) {
+      const { name, percentage } = req.body;
 
-    if (!name || percentage === undefined) {
-      return res
-        .status(400)
-        .json({ error: "Name and percentage are required." });
+      try {
+        const doc = await OurSkills.findById(id);
+        if (!doc) return res.status(404).json({ error: "OurSkills not found" });
+
+        const skill = doc.skills.id(skillId);
+        if (!skill) return res.status(404).json({ error: "Skill not found" });
+
+        if (name) skill.name = name;
+        if (percentage !== undefined) skill.percentage = percentage;
+
+        await doc.save();
+        return res.status(200).json({ message: "Skill updated", data: doc });
+      } catch (error) {
+        console.error("Error updating skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
 
-    if (percentage < 0 || percentage > 100) {
-      return res
-        .status(400)
-        .json({ error: "Percentage must be between 0 and 100." });
-    }
+    // 🔹 Delete a specific skill item
+    else if (req.method === "DELETE" && id && skillId) {
+      try {
+        const doc = await OurSkills.findById(id);
+        if (!doc) return res.status(404).json({ error: "OurSkills not found" });
 
-    try {
-      const updated = await OurSkills.findByIdAndUpdate(
-        id,
-        { $push: { skills: { name, percentage } } },
-        { new: true }
-      );
-
-      if (!updated)
-        return res.status(404).json({ error: "OurSkills not found" });
-
-      return res.status(200).json({ message: "Skill added", data: updated });
-    } catch (error) {
-      console.error("Error adding skill:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  }
-
-  // 🔹 Update a specific skill item
-  else if (req.method === "PUT" && id && skillId) {
-    const { name, percentage } = req.body;
-
-    try {
-      const doc = await OurSkills.findById(id);
-      if (!doc) return res.status(404).json({ error: "OurSkills not found" });
-
-      const skill = doc.skills.id(skillId);
-      if (!skill) return res.status(404).json({ error: "Skill not found" });
-
-      if (name) skill.name = name;
-      if (percentage !== undefined) skill.percentage = percentage;
-
-      await doc.save();
-      return res.status(200).json({ message: "Skill updated", data: doc });
-    } catch (error) {
-      console.error("Error updating skill:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  }
-
-  // 🔹 Delete a specific skill item
-  else if (req.method === "DELETE" && id && skillId) {
-    try {
-      const doc = await OurSkills.findById(id);
-      if (!doc) return res.status(404).json({ error: "OurSkills not found" });
-
-      const skill = doc.skills.id(skillId);
-      if (!skill) return res.status(404).json({ error: "Skill not found" });
+        const skill = doc.skills.id(skillId);
+        if (!skill) return res.status(404).json({ error: "Skill not found" });
 
       doc.skills.pull({ _id: skillId });
 
-      await doc.save();
-      return res.status(200).json({ message: "Skill deleted", data: doc });
-    } catch (error) {
-      console.error("Error deleting skill:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  }
-
-  // 🔹 Create new skill section
-  else if (req.method === "POST") {
-    const { title, highlight, description, skills, buttonText, buttonLink } =
-      req.body;
-
-    if (
-      !title ||
-      !highlight ||
-      !description ||
-      !skills ||
-      !Array.isArray(skills)
-    ) {
-      return res.status(400).json({
-        error: "Title, highlight, description, and skills[] are required.",
-      });
+        await doc.save();
+        return res.status(200).json({ message: "Skill deleted", data: doc });
+      } catch (error) {
+        console.error("Error deleting skill:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
 
-    try {
-      const newSkillSet = new OurSkills({
-        title,
-        highlight,
-        description,
-        skills,
-        buttonText,
-        buttonLink,
-      });
-      await newSkillSet.save();
-      return res
-        .status(201)
-        .json({ message: "Skill section added", data: newSkillSet });
-    } catch (error) {
-      console.error("Error saving skill section:", error);
-      return res.status(500).json({ error: "Internal server error" });
+    // 🔹 Create new skill section
+    else if (req.method === "POST") {
+      const { title, highlight, description, skills, buttonText, buttonLink } =
+        req.body;
+
+      if (
+        !title ||
+        !highlight ||
+        !description ||
+        !skills ||
+        !Array.isArray(skills)
+      ) {
+        return res.status(400).json({
+          error: "Title, highlight, description, and skills[] are required.",
+        });
+      }
+
+      try {
+        const newSkillSet = new OurSkills({
+          title,
+          highlight,
+          description,
+          skills,
+          buttonText,
+          buttonLink,
+        });
+        await newSkillSet.save();
+        return res
+          .status(201)
+          .json({ message: "Skill section added", data: newSkillSet });
+      } catch (error) {
+        console.error("Error saving skill section:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
-  }
 
-  // 🔹 Get latest skill section
-  else if (req.method === "GET") {
-    try {
-      const result = await OurSkills.findOne().sort({ _id: -1 });
-      return res.status(200).json(result);
-    } catch (error) {
-      console.error("Error fetching skill section:", error);
-      return res.status(500).json({ error: "Internal server error" });
+    // 🔹 Get latest skill section
+    else if (req.method === "GET") {
+      try {
+        const result = await OurSkills.findOne().sort({ _id: -1 });
+        return res.status(200).json(result);
+      } catch (error) {
+        console.error("Error fetching skill section:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
-  }
 
-  // 🔹 Update entire section
-  else if (req.method === "PUT") {
-    if (!id)
-      return res.status(400).json({ error: "ID is required for update." });
+    // 🔹 Update entire section
+    else if (req.method === "PUT") {
+      if (!id)
+        return res.status(400).json({ error: "ID is required for update." });
 
-    try {
-      const updated = await OurSkills.findByIdAndUpdate(id, req.body, {
-        new: true,
-      });
-      return res
-        .status(200)
-        .json({ message: "Skill section updated", data: updated });
-    } catch (error) {
-      console.error("Error updating skill section:", error);
-      return res.status(500).json({ error: "Internal server error" });
+      try {
+        const updated = await OurSkills.findByIdAndUpdate(id, req.body, {
+          new: true,
+        });
+        return res
+          .status(200)
+          .json({ message: "Skill section updated", data: updated });
+      } catch (error) {
+        console.error("Error updating skill section:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
-  }
 
-  // 🔹 Delete entire section
-  else if (req.method === "DELETE") {
-    if (!id)
-      return res.status(400).json({ error: "ID is required for deletion." });
+    else if (req.method === "DELETE") {
+      if (!id)
+        return res.status(400).json({ error: "ID is required for deletion." });
 
-    try {
-      await OurSkills.findByIdAndDelete(id);
-      return res.status(200).json({ message: "Skill section deleted" });
-    } catch (error) {
-      console.error("Error deleting skill section:", error);
-      return res.status(500).json({ error: "Internal server error" });
+      try {
+        await OurSkills.findByIdAndDelete(id);
+        return res.status(200).json({ message: "Skill section deleted" });
+      } catch (error) {
+        console.error("Error deleting skill section:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
     }
-  }
 
-  else {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-},
+    else {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+  },
 
   latestThinking: async (req, res) => {
     const id = req.params.id;
