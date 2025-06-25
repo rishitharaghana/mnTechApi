@@ -564,17 +564,17 @@ module.exports = {
   productsList: (req, res) => {},
 
   service : async (req, res) => {
-  const id = req.params.id; // Parent Service document ID
-  const itemId = req.params.itemId; // ID of the individual service item in the services array
+  const id = req.params.id; 
+  const itemId = req.params.itemId; 
 
   try {
-    // GET: Fetch all Service documents
+    
     if (req.method === 'GET' && !id) {
       const data = await Service.find().sort({ _id: -1 });
       return res.status(200).json(data);
     }
 
-    // GET: Fetch a specific service item by itemId
+    
     if (req.method === 'GET' && id && itemId && req.path.includes('/service-item')) {
       const service = await Service.findById(id);
       if (!service) {
@@ -587,7 +587,7 @@ module.exports = {
       return res.status(200).json(serviceItem);
     }
 
-    // POST: Create a new Service document
+   
     if (req.method === 'POST' && !id) {
       const { sectionTitle, heading, subtitle, services, topBanner, callToAction } = req.body;
       if (!sectionTitle || !heading || !subtitle || !Array.isArray(services)) {
@@ -599,7 +599,7 @@ module.exports = {
         subtitle,
         services: services.map((service) => ({
           ...service,
-          _id: new mongoose.Types.ObjectId(), // Generate _id for each service item
+          _id: new mongoose.Types.ObjectId(), 
         })),
         topBanner,
         callToAction,
@@ -608,7 +608,7 @@ module.exports = {
       return res.status(201).json({ message: 'Service content created', data: newService });
     }
 
-    // POST: Add a new service item to the services array
+ 
     if (req.method === 'POST' && id && req.path.includes('/service-item')) {
       const { title, description, icon } = req.body;
       if (!title || !description) {
@@ -633,7 +633,7 @@ module.exports = {
       return res.status(201).json({ message: 'Service item added', data: updated });
     }
 
-    // PUT: Update the entire Service document
+  
     if (req.method === 'PUT' && id && !req.path.includes('/service-item')) {
       const updated = await Service.findByIdAndUpdate(
         id,
@@ -644,7 +644,7 @@ module.exports = {
       return res.status(200).json({ message: 'Updated successfully', data: updated });
     }
 
-    // PUT: Update a specific service item in the services array
+    
     if (req.method === 'PUT' && id && itemId && req.path.includes('/service-item')) {
       const { title, description, icon } = req.body;
       if (!title || !description) {
@@ -666,14 +666,12 @@ module.exports = {
       return res.status(200).json({ message: 'Service item updated', data: updated });
     }
 
-    // DELETE: Delete the entire Service document
+   
     if (req.method === 'DELETE' && id && !req.path.includes('/service-item')) {
       const deleted = await Service.findByIdAndDelete(id);
       if (!deleted) return res.status(404).json({ error: 'Not found' });
       return res.status(200).json({ message: 'Deleted successfully' });
     }
-
-    // DELETE: Delete a specific service item from the services array
     if (req.method === 'DELETE' && id && itemId && req.path.includes('/service-item')) {
       const updated = await Service.findByIdAndUpdate(
         id,
@@ -698,14 +696,14 @@ serviceSection : async (req, res) => {
   const { id, itemId, type } = req.params;
 
   try {
-    // GET entire section
+   
     if (req.method === 'GET' && !id && !type && !itemId) {
       const data = await ServiceSection.findOne();
       if (!data) return res.status(404).json({ error: 'Section not found' });
       return res.status(200).json(data);
     }
 
-    // GET specific item by ID (itServices or products)
+    
     if (req.method === 'GET' && id && type && itemId) {
       if (!['itServices', 'products'].includes(type)) {
         return res.status(400).json({ error: 'Invalid type' });
@@ -719,7 +717,7 @@ serviceSection : async (req, res) => {
       return res.status(200).json(item);
     }
 
-    // POST new section
+    
     if (req.method === 'POST' && !id && !type && !itemId) {
       const { sectionTitle, itServicesTitle, productsTitle, itServices, products } = req.body;
 
@@ -739,7 +737,7 @@ serviceSection : async (req, res) => {
       return res.status(201).json({ message: 'Service section created', data: newSection });
     }
 
-    // POST new item to itServices or products
+
     if (req.method === 'POST' && id && type && !itemId) {
       if (!['itServices', 'products'].includes(type)) {
         return res.status(400).json({ error: 'Invalid type' });
@@ -759,7 +757,7 @@ serviceSection : async (req, res) => {
       return res.status(201).json({ message: `${type} item added`, data: section });
     }
 
-    // PUT entire section
+  
     if (req.method === 'PUT' && id && !type && !itemId) {
       const updated = await ServiceSection.findByIdAndUpdate(id, req.body, { new: true });
       if (!updated) return res.status(404).json({ error: 'Section not found' });
@@ -767,7 +765,7 @@ serviceSection : async (req, res) => {
       return res.status(200).json({ message: 'Service section updated', data: updated });
     }
 
-    // PUT specific item in itServices or products
+
     if (req.method === 'PUT' && id && type && itemId) {
       if (!['itServices', 'products'].includes(type)) {
         return res.status(400).json({ error: 'Invalid type' });
@@ -785,7 +783,7 @@ serviceSection : async (req, res) => {
       return res.status(200).json({ message: `${type} item updated`, data: section });
     }
 
-    // DELETE entire section
+  
     if (req.method === 'DELETE' && id && !type && !itemId) {
       const deleted = await ServiceSection.findByIdAndDelete(id);
       if (!deleted) return res.status(404).json({ error: 'Section not found' });
@@ -793,7 +791,7 @@ serviceSection : async (req, res) => {
       return res.status(200).json({ message: 'Service section deleted' });
     }
 
-    // DELETE specific item in itServices or products
+  
     if (req.method === 'DELETE' && id && type && itemId) {
       if (!['itServices', 'products'].includes(type)) {
         return res.status(400).json({ error: 'Invalid type' });
