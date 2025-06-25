@@ -694,96 +694,90 @@ module.exports = {
   }
 },
 
-  serviceSection: async (req, res) => {
+serviceSection : async (req, res) => {
   const { id, itemId, type } = req.params;
 
   try {
-    if (req.method === "GET" && !id) {
+    // GET entire section
+    if (req.method === 'GET' && !id && !type && !itemId) {
       const data = await ServiceSection.findOne();
+      if (!data) return res.status(404).json({ error: 'Section not found' });
       return res.status(200).json(data);
     }
 
-    if (req.method === "POST" && !id) {
-      const {
-        sectionTitle,
-        itServicesTitle,
-        productsTitle,
-        itServices,
-        products,
-      } = req.body;
+    // GET specific item by ID (itServices or products)
+    if (req.method === 'GET' && id && type && itemId) {
+      if (!['itServices', 'products'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid type' });
+      }
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: 'Section not found' });
+
+      const item = section[type].id(itemId);
+      if (!item) return res.status(404).json({ error: `${type} item not found` });
+
+      return res.status(200).json(item);
+    }
+
+    // POST new section
+    if (req.method === 'POST' && !id && !type && !itemId) {
+      const { sectionTitle, itServicesTitle, productsTitle, itServices, products } = req.body;
 
       if (!sectionTitle || !itServicesTitle) {
-        return res.status(400).json({
-          error: "sectionTitle and itServicesTitle are required.",
-        });
+        return res.status(400).json({ error: 'sectionTitle and itServicesTitle are required' });
       }
 
       const newSection = new ServiceSection({
         sectionTitle,
         itServicesTitle,
-        productsTitle: productsTitle || "",
+        productsTitle: productsTitle || '',
         itServices: itServices || [],
-        products: products || [],
+        products: products || []
       });
 
       await newSection.save();
-      return res.status(201).json({
-        message: "Service section added",
-        data: newSection,
-      });
-    }
-    if (req.method === "GET" && id && itemId && type) {
-  const section = await ServiceSection.findById(id);
-  if (!section) return res.status(404).json({ error: "Section not found" });
-
-  const item = section[type]?.id(itemId);
-  if (!item) return res.status(404).json({ error: "Item not found" });
-
-  return res.status(200).json(item);
-}
-
-
-    if (req.method === "PUT" && id && !type) {
-      const updated = await ServiceSection.findByIdAndUpdate(id, req.body, {
-        new: true,
-      });
-
-      if (!updated) return res.status(404).json({ error: "Section not found." });
-
-      return res.status(200).json({
-        message: "Service section updated",
-        data: updated,
-      });
+      return res.status(201).json({ message: 'Service section created', data: newSection });
     }
 
-    if (req.method === "DELETE" && id && !type) {
-      const deleted = await ServiceSection.findByIdAndDelete(id);
-      if (!deleted) return res.status(404).json({ error: "Section not found." });
+    // POST new item to itServices or products
+    if (req.method === 'POST' && id && type && !itemId) {
+      if (!['itServices', 'products'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid type' });
+      }
 
-      return res.status(200).json({ message: "Service section deleted" });
-    }
-
-    if (req.method === "POST" && id && type) {
       const { icon, title, description } = req.body;
-      if (!["itServices", "products"].includes(type)) {
-        return res.status(400).json({ error: "Invalid type" });
+      if (!title || !description || !icon) {
+        return res.status(400).json({ error: 'title, description, and icon are required' });
       }
 
       const section = await ServiceSection.findById(id);
-      if (!section) return res.status(404).json({ error: "Section not found" });
+      if (!section) return res.status(404).json({ error: 'Section not found' });
 
       section[type].push({ icon, title, description });
       await section.save();
 
-      return res.status(200).json({ message: `${type} item added`, data: section });
+      return res.status(201).json({ message: `${type} item added`, data: section });
     }
 
-    if (req.method === "PUT" && id && itemId && type) {
+    // PUT entire section
+    if (req.method === 'PUT' && id && !type && !itemId) {
+      const updated = await ServiceSection.findByIdAndUpdate(id, req.body, { new: true });
+      if (!updated) return res.status(404).json({ error: 'Section not found' });
+
+      return res.status(200).json({ message: 'Service section updated', data: updated });
+    }
+
+    // PUT specific item in itServices or products
+    if (req.method === 'PUT' && id && type && itemId) {
+      if (!['itServices', 'products'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid type' });
+      }
+
       const section = await ServiceSection.findById(id);
-      if (!section) return res.status(404).json({ error: "Section not found" });
+      if (!section) return res.status(404).json({ error: 'Section not found' });
 
       const item = section[type].id(itemId);
-      if (!item) return res.status(404).json({ error: "Item not found" });
+      if (!item) return res.status(404).json({ error: `${type} item not found` });
 
       Object.assign(item, req.body);
       await section.save();
@@ -791,22 +785,39 @@ module.exports = {
       return res.status(200).json({ message: `${type} item updated`, data: section });
     }
 
-    if (req.method === "DELETE" && id && itemId && type) {
-      const section = await ServiceSection.findById(id);
-      if (!section) return res.status(404).json({ error: "Section not found" });
+    // DELETE entire section
+    if (req.method === 'DELETE' && id && !type && !itemId) {
+      const deleted = await ServiceSection.findByIdAndDelete(id);
+      if (!deleted) return res.status(404).json({ error: 'Section not found' });
 
-      section[type] = section[type].filter((i) => i._id.toString() !== itemId);
+      return res.status(200).json({ message: 'Service section deleted' });
+    }
+
+    // DELETE specific item in itServices or products
+    if (req.method === 'DELETE' && id && type && itemId) {
+      if (!['itServices', 'products'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid type' });
+      }
+
+      const section = await ServiceSection.findById(id);
+      if (!section) return res.status(404).json({ error: 'Section not found' });
+
+      const itemIndex = section[type].findIndex((i) => i._id.toString() === itemId);
+      if (itemIndex === -1) return res.status(404).json({ error: `${type} item not found` });
+
+      section[type].splice(itemIndex, 1);
       await section.save();
 
       return res.status(200).json({ message: `${type} item deleted`, data: section });
     }
 
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error("ServiceSection API error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error('ServiceSection API error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 },
+
 
 
   collaboration: async (req, res) => {
