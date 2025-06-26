@@ -8,7 +8,7 @@ const skillItemSchema = new mongoose.Schema({
 const ourSkillsSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    description: { type: String, required: true },
+    description: { type: String,},
     highlight: { type: String, required: true },
     skills: [skillItemSchema],
        buttonText: { type: String, default: "More" },    

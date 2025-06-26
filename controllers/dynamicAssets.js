@@ -286,6 +286,7 @@ module.exports = {
     const id = req.params.id;
 
     if (req.method === "POST") {
+    
       return logMulter(req, res, async () => {
         const {
           title_lines,
@@ -1029,7 +1030,6 @@ serviceSection : async (req, res) => {
       }
     }
 
-    // 🔹 Update a specific skill item
     else if (req.method === "PUT" && id && skillId) {
       const { name, percentage } = req.body;
 
@@ -1051,7 +1051,6 @@ serviceSection : async (req, res) => {
       }
     }
 
-    // 🔹 Delete a specific skill item
     else if (req.method === "DELETE" && id && skillId) {
       try {
         const doc = await OurSkills.findById(id);
@@ -1070,7 +1069,6 @@ serviceSection : async (req, res) => {
       }
     }
 
-    // 🔹 Create new skill section
     else if (req.method === "POST") {
       const { title, highlight, description, skills, buttonText, buttonLink } =
         req.body;
