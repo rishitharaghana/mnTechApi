@@ -499,50 +499,54 @@ module.exports = {
         console.error("Error fetching team members:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-    } else if (req.method === "PUT") {
-      if (!id) {
-        return res.status(400).json({ error: "ID is required for update" });
-      }
-      return logMulter(req, res, async () => {
-        const {
-          name,
-          designation,
-          linkedin_url,
-          twitter_url,
-          facebook_url,
-          instagram_url,
-        } = req.body;
-        const image = req.file ? req.file.path : undefined;
-        const updateData = {
-          name,
-          designation,
-          linkedin_url,
-          twitter_url,
-          facebook_url,
-          instagram_url,
-        };
-        if (image) {
-          updateData.image = image;
-        }
-        try {
-          const updatedTeamMember = await Team.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-          );
-          if (!updatedTeamMember) {
-            return res.status(404).json({ error: "Team member not found" });
-          }
-          return res.status(200).json({
-            message: "Team member updated",
-            data: updatedTeamMember,
-          });
-        } catch (error) {
-          console.error("Error updating team member:", error);
-          return res.status(500).json({ error: "Internal server error" });
-        }
+   } else if (req.method === "PUT") {
+  if (!id) {
+    return res.status(400).json({ error: "ID is required for update" });
+  }
+
+  return logMulter(req, res, async () => {
+    try {
+      const {
+        name,
+        designation,
+        linkedin_url,
+        twitter_url,
+        facebook_url,
+        instagram_url,
+      } = req.body;
+
+      const image = req.files && req.files.image && req.files.image[0]?.path;
+
+      // Only update image if it's provided
+      const updateData = {
+        name,
+        designation,
+        linkedin_url,
+        twitter_url,
+        facebook_url,
+        instagram_url,
+      };
+      if (image) updateData.image = image;
+
+      const updatedTeamMember = await Team.findByIdAndUpdate(id, updateData, {
+        new: true,
       });
-    } else if (req.method === "DELETE") {
+
+      if (!updatedTeamMember) {
+        return res.status(404).json({ error: "Team member not found" });
+      }
+
+      return res.status(200).json({
+        message: "Team member updated",
+        data: updatedTeamMember,
+      });
+    } catch (error) {
+      console.error("Error updating team member:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+}
+ else if (req.method === "DELETE") {
       if (!id) {
         return res.status(400).json({ error: "ID is required for deletion." });
       }
