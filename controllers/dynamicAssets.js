@@ -499,7 +499,7 @@ module.exports = {
         console.error("Error fetching team members:", error);
         return res.status(500).json({ error: "Internal server error" });
       }
-   } else if (req.method === "PUT") {
+   }else if (req.method === "PUT") {
   if (!id) {
     return res.status(400).json({ error: "ID is required for update" });
   }
@@ -515,9 +515,30 @@ module.exports = {
         instagram_url,
       } = req.body;
 
-      const image = req.files && req.files.image && req.files.image[0]?.path;
+      const image = req.files?.image?.[0]?.path;
 
-      // Only update image if it's provided
+      console.log("Files received:", req.files);
+
+      // Find existing team member
+      const existingMember = await Team.findById(id);
+      if (!existingMember) {
+        return res.status(404).json({ error: "Team member not found" });
+      }
+
+      // If a new image is uploaded, delete the old one
+      if (image && existingMember.image) {
+        const fs = require("fs");
+        const path = require("path");
+        const oldImagePath = path.resolve(existingMember.image);
+        fs.unlink(oldImagePath, (err) => {
+          if (err) {
+            console.warn("⚠️ Failed to delete old image:", err.message);
+          } else {
+            console.log("🧹 Old image deleted:", existingMember.image);
+          }
+        });
+      }
+
       const updateData = {
         name,
         designation,
@@ -526,26 +547,27 @@ module.exports = {
         facebook_url,
         instagram_url,
       };
-      if (image) updateData.image = image;
 
-      const updatedTeamMember = await Team.findByIdAndUpdate(id, updateData, {
+      if (image) {
+        updateData.image = image;
+      }
+
+      const updatedMember = await Team.findByIdAndUpdate(id, updateData, {
         new: true,
       });
 
-      if (!updatedTeamMember) {
-        return res.status(404).json({ error: "Team member not found" });
-      }
-
       return res.status(200).json({
-        message: "Team member updated",
-        data: updatedTeamMember,
+        message: "Team member updated successfully",
+        data: updatedMember,
       });
     } catch (error) {
-      console.error("Error updating team member:", error);
+      console.error("❌ Error updating team member:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   });
 }
+
+
  else if (req.method === "DELETE") {
       if (!id) {
         return res.status(400).json({ error: "ID is required for deletion." });
