@@ -6,13 +6,13 @@ const app = express();
 const PORT = 4001;
 const path = require("path");
 app.use((req, res, next) => {
-  res.setHeader("ngrok-skip-browser-warning", "true");
+  
   next();
 });
 app.disable("x-powered-by");
 const corsOptions = {
-  origin: ["http://mntechs.com","https://g7m4x738-5174.inc1.devtunnels.ms", "http://localhost:3000", "https://admin.mntechs.com", "https://g7m4x738-5173.inc1.devtunnels.ms/", "https://mntechs.com",
-    "https://api.mntechs.com","http://localhost:5175", "http://localhost:5177","http://localhost:5176","http://localhost:5174", "http://localhost:5173"], 
+  origin: ["http://mntechs.com","https://admin.mntechs.com",
+    "https://api.mntechs.com",], 
   credentials: true,
   methods: "GET,POST,PUT,DELETE,OPTIONS",
   allowedHeaders: [
@@ -21,8 +21,6 @@ const corsOptions = {
     "Content-Type",
     "Accept",
     "Authorization",
-    "ngrok-skip-browser-warning",
-
   ],
   exposedHeaders: ["Content-Disposition"],
 };
