@@ -3,6 +3,7 @@ const registerModel = require("../models/registerModel");
 const teamModel = require("../models/teamModel");
 const newsLetter = require("../models/newsLetterSubscribeModel");
 const contactus = require('../models/contactModel');
+const mongoose = require("mongoose")
 
 const phoneRegex = /^[6-9]\d{9}$/;
 
