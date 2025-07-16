@@ -11,7 +11,7 @@ app.use((req, res, next) => {
 });
 app.disable("x-powered-by");
 const corsOptions = {
-  origin: ["http://mntechs.com","https://admin.mntechs.com",], 
+  origin: ["https://mntechs.com","https://admin.mntechs.com",], 
   credentials: true,
   methods: "GET,POST,PUT,DELETE,OPTIONS",
   allowedHeaders: [
