@@ -45,6 +45,8 @@ const newsLetterRoutes = require("./routes/newsLetterRoutes");
 app.use("/newsLetter", newsLetterRoutes);
 const authRoutes = require("./routes/authRoutes");
 app.use("/auth",authRoutes);
+const footerRoutes = require('./routes/footerRoutes');
+app.use('/', footerRoutes)
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
