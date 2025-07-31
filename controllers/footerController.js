@@ -122,8 +122,8 @@ module.exports = {
 
   getFooter: async (req, res) => {
     try {
-      const footers = await Footer.find().sort({ _id: -1 });
-      return res.status(200).json(footers);
+      const footer = await Footer.find().sort({ _id: -1 });
+      return res.status(200).json(footer);
     } catch (error) {
       console.error("Error fetching footer:", error);
       return res.status(500).json({ error: "Internal server error" });

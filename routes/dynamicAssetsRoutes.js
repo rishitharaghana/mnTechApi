@@ -2,94 +2,73 @@ const express = require("express");
 const router = express.Router();
 const dynamicAssetsController = require("../controllers/dynamicAssets");
 
-router.post("/navigation", dynamicAssetsController.navigation);
-router.get("/navigation", dynamicAssetsController.navigation);
-router.put("/navigation/:id", dynamicAssetsController.navigation);
-router.delete("/navigation/:id", dynamicAssetsController.navigation);
 
-router.post("/saasApplication", dynamicAssetsController.saasApplication);
-router.get("/saasApplication", dynamicAssetsController.saasApplication);
-router.put("/saasApplication/:id", dynamicAssetsController.saasApplication);
-router.delete("/saasApplication/:id", dynamicAssetsController.saasApplication);
+router.post("/saasApplication", dynamicAssetsController.createSaasApplication);
+router.get("/saasApplication", dynamicAssetsController.getSaasApplication);
+router.put("/saasApplication/:id", dynamicAssetsController.updateSaasApplication);
+router.delete("/saasApplication/:id", dynamicAssetsController.deleteSaasApplication);
 
-
-router.get('/serviceSection', dynamicAssetsController.serviceSection);
-router.post('/serviceSection', dynamicAssetsController.serviceSection);
-router.put('/serviceSection/:id', dynamicAssetsController.serviceSection);
-router.delete('/serviceSection/:id', dynamicAssetsController.serviceSection);
+router.post('/hero', dynamicAssetsController.createHero);
+router.get('/hero', dynamicAssetsController.getHero);
+router.put('/hero/:id', dynamicAssetsController.updateHero);
+router.delete('/hero/:id', dynamicAssetsController.deleteHero);
 
 
-router.get('/serviceSection/:id/:type/:itemId', dynamicAssetsController.serviceSection);
-router.post('/serviceSection/:id/:type', dynamicAssetsController.serviceSection);
-router.put('/serviceSection/:id/:type/:itemId', dynamicAssetsController.serviceSection);
-router.delete('/serviceSection/:id/:type/:itemId', dynamicAssetsController.serviceSection);
+router.post("/collaboration", dynamicAssetsController.createCollaboration);
+router.get("/collaboration", dynamicAssetsController.getCollaboration);
+router.put("/collaboration/:id", dynamicAssetsController.updateCollaboration);
+router.delete("/collaboration/:id", dynamicAssetsController.deleteCollaboration);
 
-router.post("/collaboration", dynamicAssetsController.collaboration);
-router.get("/collaboration", dynamicAssetsController.collaboration);
-router.put("/collaboration/:id", dynamicAssetsController.collaboration);
-router.delete("/collaboration/:id", dynamicAssetsController.collaboration);
+router.post("/review", dynamicAssetsController.createReview);
+router.get("/review", dynamicAssetsController.getReview);
 
-router.post("/review", dynamicAssetsController.review);
-router.get("/review", dynamicAssetsController.review);
-router.get("/review/:id", dynamicAssetsController.review);
-router.put("/review/:id", dynamicAssetsController.review);
-router.delete("/review/:id", dynamicAssetsController.review);
+router.put("/review/:id", dynamicAssetsController.updateReview);
+router.delete("/review/:id", dynamicAssetsController.deleteReview);
 
-router.post("/ourSkills", dynamicAssetsController.ourSkills);
-router.get("/ourSkills", dynamicAssetsController.ourSkills);
-router.put("/ourSkills/:id", dynamicAssetsController.ourSkills);
-router.delete("/ourSkills/:id", dynamicAssetsController.ourSkills);
+router.post("/ourSkills", dynamicAssetsController.createOurSkills);
+router.get("/ourSkills", dynamicAssetsController.getOurSkills);
+router.put("/ourSkills/:id", dynamicAssetsController.updateOurSkills);
+router.delete("/ourSkills/:id", dynamicAssetsController.deleteOurSkills);
 
-router.get("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills);
-router.post("/ourSkills/:id/skill", dynamicAssetsController.ourSkills); 
-router.put("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills); 
-router.delete("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills);
+// router.get("/ourSkills/:id/skill/:skillId", dynamicAssetsController.ourSkills);
+router.post("/ourSkills/:id/skill", dynamicAssetsController.addSkill); 
+router.put("/ourSkills/:id/skill/:skillId", dynamicAssetsController.updateSkill); 
+router.delete("/ourSkills/:id/skill/:skillId", dynamicAssetsController.deleteSkill);
 
-router.post("/latestThinking", dynamicAssetsController.latestThinking);
-router.get("/latestThinking", dynamicAssetsController.latestThinking);
-router.put("/latestThinking/:id", dynamicAssetsController.latestThinking);
-router.delete("/latestThinking/:id", dynamicAssetsController.latestThinking);
-router.post("/latestProject", dynamicAssetsController.latestProject);
-router.get("/latestProject", dynamicAssetsController.latestProject);
-router.put("/latestProject/:id", dynamicAssetsController.latestProject);
-router.delete("/latestProject/:id", dynamicAssetsController.latestProject);
-router.post("/hero", dynamicAssetsController.hero);
-router.get("/hero", dynamicAssetsController.hero);
-router.put("/hero/:id", dynamicAssetsController.hero);
-router.delete("/hero/:id", dynamicAssetsController.hero);
-router.post("/client", dynamicAssetsController.client);
-router.get("/client", dynamicAssetsController.client);
-router.put("/client/:id", dynamicAssetsController.client);
-router.delete("/client/:id", dynamicAssetsController.client);
+router.post("/latestThinking", dynamicAssetsController.createLatestThinking);
+router.get("/latestThinking", dynamicAssetsController.getLatestThinking);
+router.put("/latestThinking/:id", dynamicAssetsController.updateLatestThinking);
+router.delete("/latestThinking/:id", dynamicAssetsController.deleteLatestThinking);
 
+router.post("/latestProject", dynamicAssetsController.createLatestProject);
+router.get("/latestProject", dynamicAssetsController.getLatestProject);
+router.put("/latestProject/:id", dynamicAssetsController.updateLatestProject);
+router.delete("/latestProject/:id", dynamicAssetsController.deleteLatestProject);
 
-router.post("/service", dynamicAssetsController.service);
-router.get('/service', dynamicAssetsController.service); 
-router.put('/service/:id', dynamicAssetsController.service); 
-router.delete('/service/:id', dynamicAssetsController.service); 
+router.post("/client", dynamicAssetsController.createClient);
+router.get("/client", dynamicAssetsController.getClients);
+router.put("/client/:id", dynamicAssetsController.updateClient);
+router.delete("/client/:id", dynamicAssetsController.deleteClient);
 
-router.get('/service/:id/service-item/:itemId', dynamicAssetsController.service); 
-router.post('/service/:id/service-item', dynamicAssetsController.service); 
-router.put('/service/:id/service-item/:itemId', dynamicAssetsController.service); 
-router.delete('/service/:id/service-item/:itemId', dynamicAssetsController.service); 
-
-router.post("/safeguard", dynamicAssetsController.safeguard);
-router.get("/safeguard", dynamicAssetsController.safeguard);
-router.put("/safeguard/:id", dynamicAssetsController.safeguard);
-router.delete("/safeguard/:id", dynamicAssetsController.safeguard);
+router.post("/safeguard", dynamicAssetsController.createSafeguard);
+router.get("/safeguard", dynamicAssetsController.getSafeguard);
+router.put("/safeguard/:id", dynamicAssetsController.updateSafeguard);
+router.delete("/safeguard/:id", dynamicAssetsController.deleteSafeguard);
 ;
-router.post("/about", dynamicAssetsController.about);
-router.get("/about", dynamicAssetsController.about);
-router.put("/about/:id", dynamicAssetsController.about);
-router.delete("/about/:id", dynamicAssetsController.about);
-router.post("/value", dynamicAssetsController.value);
-router.get("/value", dynamicAssetsController.value);
-router.put("/value/:id", dynamicAssetsController.value);
-router.delete("/value/:id", dynamicAssetsController.value);
-router.post("/team", dynamicAssetsController.team);
-router.get("/team", dynamicAssetsController.team);
-router.get("/team/:id", dynamicAssetsController.team);
-router.put("/team/:id", dynamicAssetsController.team);
-router.delete("/team/:id", dynamicAssetsController.team);
+router.post("/about", dynamicAssetsController.createAbout);
+router.get("/about", dynamicAssetsController.getAbout);
+router.put("/about/:id", dynamicAssetsController.updateAbout);
+router.delete("/about/:id", dynamicAssetsController.deleteAbout);
+
+router.post("/value", dynamicAssetsController.createValue);
+router.get("/value", dynamicAssetsController.getValue);
+router.put("/value/:id", dynamicAssetsController.updateValue);
+router.delete("/value/:id", dynamicAssetsController.deleteValue);
+
+router.post("/team", dynamicAssetsController.createTeamMember);
+router.get("/team", dynamicAssetsController.getTeamMember);
+router.get("/team/:id", dynamicAssetsController.getTeamMemberById);
+router.put("/team/:id", dynamicAssetsController.updateTeamMember);
+router.delete("/team/:id", dynamicAssetsController.deleteTeamMember);
 
 module.exports = router;

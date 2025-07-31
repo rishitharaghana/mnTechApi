@@ -11,7 +11,7 @@ router.delete("/serviceFooter/:id", footerController.deleteServiceFooter);//dele
 router.post("/footer", footerController.createFooter);
 router.get("/footer", footerController.getFooter);
 router.put("/footer/:id", footerController.updateFooter);
-router.delete("/footer/:id", footerController.deleteServiceFooter)
+router.delete("/footer/:id", footerController.deleteFooter)
 
 
 module.exports = router;
