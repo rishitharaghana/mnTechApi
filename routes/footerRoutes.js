@@ -3,10 +3,10 @@ const router = express.Router();
 const footerController = require("../controllers/footerController");
 
 
-router.post("/serviceFooter", footerController.createServiceFooter);//createservicefooter
-router.get("/serviceFooter", footerController.getServiceFooter);//getserviceFooter
-router.put("/serviceFooter/:id", footerController.updateServiceFooter);//upadte servicefooter
-router.delete("/serviceFooter/:id", footerController.deleteServiceFooter);//deleteserviceFooter
+router.post("/serviceFooter", footerController.createServiceFooter);
+router.get("/serviceFooter", footerController.getServiceFooter);
+router.put("/serviceFooter/:id", footerController.updateServiceFooter);
+router.delete("/serviceFooter/:id", footerController.deleteServiceFooter);
 
 router.post("/footer", footerController.createFooter);
 router.get("/footer", footerController.getFooter);
